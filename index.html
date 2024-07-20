@@ -1,40 +1,115 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>School Result</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    h2 {
+      color: #333;
+    }
+    form, #result {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      max-width: 90%;
+      width: 400px;
+      box-sizing: border-box;
+    }
+    input[type="number"] {
+      width: calc(100% - 22px);
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    .loader {
+      border: 16px solid #f3f3f3;
+      border-top: 16px solid #3498db;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 2s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.0/jspdf.umd.min.js"></script>
 </head>
 <body>
   <h2>Enter Roll Number</h2>
   <form id="resultForm">
     Roll Number: <input type="number" id="rollNo" required><br>
     <button type="button" onclick="getResult()">Submit</button>
+    <button type="button" onclick="exportToPDF()">Export to PDF</button>
   </form>
   <div id="result"></div>
 
   <script>
-    function getResult() {
+    async function getResult() {
       var rollNo = document.getElementById("rollNo").value;
-      var url = "https://script.google.com/macros/s/AKfycbwsbIDRobw8B5Mak7YwvTPw90yqQTLVekuvW2slEXu8DxDmcObEhPXhWxJ1KsWwAhuu-w/exec?rollNo=" + rollNo;
+      var url = "https://script.google.com/macros/s/AKfycbxfO06Fzn3GoEo8gtZd-5tw1c6_fWQDLwIvS5S90IJbmjniijHxkuXcZIaWGMBCUk07ug/exec?rollNo=" + rollNo;
+      var resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = `<div class="loader"></div>`;  // Show loader
 
-      fetch(url)
-        .then(response => response.json())
-        .then(data => {
-          var resultDiv = document.getElementById("result");
-          if (data.name) {
-            resultDiv.innerHTML = `
-              <p>Name: ${data.name}</p>
-              <p>Father Name: ${data.fatherName}</p>
-              <p>Bengali(30): ${data.bengali}</p>
-              <p>English(30): ${data.english}</p>
-              <p>Math(40): ${data.math}</p>
-              <p>Total: ${data.total}</p>
-              <p>Division: ${data.division}</p>
-            `;
-          } else {
-            resultDiv.innerHTML = `<p>${data}</p>`;
-          }
-        });
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('Network response was not ok ' + response.statusText);
+        }
+        const data = await response.json();
+        if (data.name) {
+          resultDiv.innerHTML = `
+            <p><strong>Name:</strong> ${data.name}</p>
+            <p><strong>Father Name:</strong> ${data.fatherName}</p>
+            <p><strong>Bengali:</strong> ${data.bengali}</p>
+            <p><strong>English:</strong> ${data.english}</p>
+            <p><strong>Math:</strong> ${data.math}</p>
+            <p><strong>Total:</strong> ${data.total}</p>
+            <p><strong>Division:</strong> ${data.division}</p>
+          `;
+        } else {
+          resultDiv.innerHTML = `<p>${data}</p>`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+        console.error('Fetch error:', error);
+      }
+    }
+
+    function exportToPDF() {
+      var resultDiv = document.getElementById("result");
+      var doc = new jspdf.jsPDF();
+      doc.text(resultDiv.innerText, 10, 10);
+      doc.save('result.pdf');
     }
   </script>
 </body>
-</html> 
+</html>
